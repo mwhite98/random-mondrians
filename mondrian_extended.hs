@@ -20,8 +20,8 @@ height = 768
 --
 -- Other constants used during the generation of the image
 --
-split_low = 60 :: Int
-split_penalty = 1.1 :: Float
+split_low = 50 :: Int
+split_penalty = 0.2 :: Float
 
 --
 -- Generate and return a list of 20000 random floating point numbers between 
@@ -59,19 +59,21 @@ mondrian :: Int -> Int -> Int -> Int -> [Float] -> ([Float], String)
 mondrian _ _ 0 _ rvals = (rvals, "")
 mondrian _ _ _ 0 rvals = (rvals, "")
 mondrian x y w h (r:s:rest)
+-- we need to add our keyword into mondrian
   | w > width `div` 2 && 
-    h > height `div` 2 = b_split x y w h (r:s:rest)
+    h > height `div` 2 = b_split x (y) w h (r:s:rest)
   | w > width `div` 2  = h_split x y w h (r:s:rest)
-  | h > height `div` 2 = v_split x y w h (r:s:rest)
-  | hs && vs           = b_split x y w h rest
-  | hs                 = h_split x y w h rest
-  | vs                 = v_split x y w h rest
+  | h > height `div` 2 = v_split x y (w) h (r:s:rest)
+  | hs && vs           = b_split x y (w) h rest
+  | hs                 = h_split x y (w) h rest
+  | vs                 = v_split x y (w) h rest
   | otherwise = (s:rest, "<rect x=" ++ (show x) ++ 
                          " y=" ++ (show y) ++ 
                          " width=" ++ (show w) ++ 
                          " height=" ++ (show h) ++ 
                          " stroke=\"black\" stroke-width=\"3\" fill=\"" ++ 
                          (randomColor x y w h r s) ++ 
+						 -- we would need random colour to take our key word here
                          "\" />\n")
   where 
     rand1 = randomInt split_low (round (fromIntegral w * split_penalty)) r
@@ -127,6 +129,11 @@ v_split x y w h (r:rest) = (rest2, s1 ++ s2)
 --
 randomColor :: Int -> Int -> Int -> Int -> Float -> Float -> String
 randomColor x y w h r1 r2
+ -- we need random colour to take, as parameters, whatever the user types in
+ -- then, based on what the user inputs, we will choose random colours from that list (maybe 2 lists? 3?)
+
+-- WHICH MEANS we also need mondrian to take in our key word
+
   | r1 * ltotal <= lul^8 = fromList r2 yellows
   | r1 * ltotal <= lul^8 + lur^8 = fromList r2 blues
   | r1 * ltotal <= lul^8 + lur^8 + lll^8 = fromList r2 greens
@@ -159,6 +166,51 @@ fromList :: Float -> [String] -> String
 fromList 1.0 vals = vals !! (length vals - 1)
 fromList r vals = vals !! (floor (r * fromIntegral (length vals)))
 
+
+
+
+
+
+
+{-
+Reds = ["indianred","lightcoral","salmon","darksalmon","lightsalmon","crimson","red","firebrick","darkred"]
+Pinks = ["pink","lightpink","hotpink","deeppink","mediumvioletred","palevioletred"]
+Oranges = ["lightsalmon","coral","tomato","orangered","darkorange","orange"]
+Yellows = ["gold","yellow","lightyellow","lemonchiffon","lightgoldenrodyellow","papayawhip","moccasin","peachpuff","palegoldenrod","khaki","darkkhaki"]
+Purples = ["lavender","thistle","plum","violet","orchid","fuchsia","magenta","mediumorchid","mediumpurple","rebeccapurple","blueviolet","darkviolet",
+"darkorchid","darkmagenta","purple","indigo","slateblue","darkslateblue","mediumslateblue"]
+greens = ["greenyellow","chatreuse","lawngreen","lime","limegreen","palegreen","lightgreen","mediumspringgreen","springgreen","mediumseagreen",
+"seagreen","forestgreen","green","darkgreen","olivedrab","olive","darkolivegreen","mediumaquamarine","darkseagreen","lightseagreen","darkcyan","teal"]
+blues = ["aqua","cyan","lightcyan","paleturquoise","aquamarine","turquoise","mediumturquoise","cadetblue","steelblue","lightsteelblue","powderblue",
+"lightblue","skyblue","lightskyblue","deepskyblue","dodgerblue","cornflowerblue","mediumslateblue","royalblue","blue","mediumblue","darkblue","navy",
+"midnightblue"]
+browns = ["cornsilk","blachedalmond","bisque","navajowhite","wheat","burlywood","tan","rosybrown","sandybrown","goldenrod","darkgoldenrod","peru",
+"chocolate","saddlebrown","sienna","brown","maroon"]
+whites = ["white","snow","honeydew","mintcream","azure","aliceblue","ghostwhite","whitesmoke","seashell","beige","oldlace","floralwhite","ivory",
+"antiquewhite","linen","lavenderblush","mistyrose"]
+greys = ["gainsboro","lightgray","silver","darkgray","gray","dimgray","lightslategray","slategray","darkslategrey","black"]
+
+what is your favourite season?
+1. Summer -> Orange
+2. Autumn -> brown
+3. Winter -> blues
+4. Spring -> greens
+
+what makes you think of home?
+1. lonely -> grey
+2. love -> pink
+3. family -> purple
+
+what helps you wind down?
+1. petting a cat -> white
+2. sunny day -> yellow
+3. physical activity -> red
+
+-}
+
+
+
+
 --
 -- The main program which generates and outputs mondrian.html.
 --
@@ -168,10 +220,21 @@ main = do
   --  numbers each time it is run.  If you want the same sequence each time
   --  use "let seed = 0" instead of "seed <- randomRIO (0, 100000 :: Int)"
 
-  --let seed = 0
-  seed <- randomRIO (0, 100000 :: Int)
+  let seed = 0
+  --seed <- randomRIO (0, 100000 :: Int)
   let randomValues = randomList seed
 
+  -- we would need to get keywords from the user here
+  putStrLn("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nPlease type a number from 1 to 4:\nwhat is your favourite season? \n\n1. Summer\n2. Autumn\n3. Winter\n4. Spring")
+  clr1 <- getLine
+  putStrLn("\nPlease type a number from 1 to 3:\nWhat makes you think of home?\n1. Lonely\n2. Love\n3. Family")
+  clr2 <- getLine
+  putStrLn("\nPlease type a number from 1 to 3:\nWhat helps you wind down?\n1. Petting a cat\n2. A sunny day\n3. Physical activity")
+  clr3 <- getLine
+  putStrLn("\nWhat would you like to name your masterpiece?")
+  masterpiece <- getLine
+  putStrLn("Bob Ross is doing his work...")
+  
   let prefix = "<html><head></head><body>\n" ++
                "<svg width=\"" ++ (show width) ++ 
                "\" height=\"" ++ (show height) ++ "\">"
@@ -179,3 +242,4 @@ main = do
       suffix = "</svg>\n</html>"
 
   writeFile "mondrian.html" (prefix ++ image ++ suffix)
+  putStrLn(masterpiece ++ " is complete!")
