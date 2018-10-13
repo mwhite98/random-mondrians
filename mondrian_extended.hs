@@ -27,6 +27,11 @@ split_penalty = 1 :: Float
 -- Generate and return a list of 20000 random floating point numbers between 
 -- 0 and 1.  (Increase the 20000 if you ever run out of random values).
 -- 
+
+--randomList :: Int -> [Float]
+--randomList seed = take 999 [0.001, 0.002..1]
+
+
 randomList :: Int -> [Float]
 randomList seed = take 20000 (rl_helper (mkStdGen seed))
 
