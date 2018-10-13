@@ -20,8 +20,8 @@ height = 768
 --
 -- Other constants used during the generation of the image
 --
-split_low = 50 :: Int
-split_penalty = 0.2 :: Float
+split_low = 60 :: Int
+split_penalty = 1 :: Float
 
 --
 -- Generate and return a list of 20000 random floating point numbers between 
@@ -55,24 +55,23 @@ randomInt low high x = round ((fromIntegral (high - low) * x) + fromIntegral low
 --   [Float]: The remaining, unused random values
 --   String: The SVG tags that draw the image
 --
-mondrian :: Int -> Int -> Int -> Int -> [Float] -> ([Float], String)
-mondrian _ _ 0 _ rvals = (rvals, "")
-mondrian _ _ _ 0 rvals = (rvals, "")
-mondrian x y w h (r:s:rest)
--- we need to add our keyword into mondrian
+mondrian :: Int -> Int -> Int -> Int -> [Float] -> [Char] -> [Char] -> [Char] -> ([Float], String)
+mondrian _ _ 0 _ rvals _ _ _ = (rvals, "")
+mondrian _ _ _ 0 rvals _ _ _  = (rvals, "")
+mondrian x y w h (r:s:rest) c1 c2 c3
   | w > width `div` 2 && 
-    h > height `div` 2 = b_split x (y) w h (r:s:rest)
-  | w > width `div` 2  = h_split x y w h (r:s:rest)
-  | h > height `div` 2 = v_split x y (w) h (r:s:rest)
-  | hs && vs           = b_split x y (w) h rest
-  | hs                 = h_split x y (w) h rest
-  | vs                 = v_split x y (w) h rest
+    h > height `div` 2 = b_split x y w h (r:s:rest) c1 c2 c3
+  | w > width `div` 2  = h_split x y w h (r:s:rest) c1 c2 c3
+  | h > height `div` 2 = v_split x y (w) h (r:s:rest) c1 c2 c3
+  | hs && vs           = b_split x y (w) h rest c1 c2 c3
+  | hs                 = h_split x y (w) h rest c1 c2 c3
+  | vs                 = v_split x y (w) h rest c1 c2 c3
   | otherwise = (s:rest, "<rect x=" ++ (show x) ++ 
                          " y=" ++ (show y) ++ 
                          " width=" ++ (show w) ++ 
                          " height=" ++ (show h) ++ 
                          " stroke=\"black\" stroke-width=\"3\" fill=\"" ++ 
-                         (randomColor x y w h r s) ++ 
+                         (randomColor x y w h r c1 c2 c3) ++ 
 						 -- we would need random colour to take our key word here
                          "\" />\n")
   where 
@@ -84,8 +83,8 @@ mondrian x y w h (r:s:rest)
 --
 --  Split the region both horizontally and vertically
 --
-b_split :: Int -> Int -> Int -> Int -> [Float] -> ([Float], String)
-b_split x y w h (r:s:rest) = (rest4, s1 ++ s2 ++ s3 ++ s4)
+--b_split :: Int -> Int -> Int -> Int -> [Float] -> ([Float], String)
+b_split x y w h (r:s:rest) c1 c2 c3 = (rest4, s1 ++ s2 ++ s3 ++ s4)
   where 
     h_rand = randomInt 33 67 r
     v_rand = randomInt 33 67 s
@@ -93,69 +92,94 @@ b_split x y w h (r:s:rest) = (rest4, s1 ++ s2 ++ s3 ++ s4)
     rw = (fromIntegral w - lw)
     th = (fromIntegral h * v_rand `div` 100)
     bh = (fromIntegral h - th)
-    (rest1, s1) = mondrian x y lw th rest
-    (rest2, s2) = mondrian (x + lw) y rw th rest1
-    (rest3, s3) = mondrian x (y + th) lw bh rest2
-    (rest4, s4) = mondrian (x + lw) (y + th) rw bh rest3
+    (rest1, s1) = mondrian x y lw th rest c1 c2 c3
+    (rest2, s2) = mondrian (x + lw) y rw th rest1 c1 c2 c3
+    (rest3, s3) = mondrian x (y + th) lw bh rest2 c1 c2 c3
+    (rest4, s4) = mondrian (x + lw) (y + th) rw bh rest3 c1 c2 c3
 
 --
 --  Split the region horizontally so that we get two that are side by side
 --
-h_split :: Int -> Int -> Int -> Int -> [Float] -> ([Float], String)
-h_split x y w h (r:rest) = (rest2, s1 ++ s2)
+--h_split :: Int -> Int -> Int -> Int -> [Float] -> ([Float], String)
+h_split x y w h (r:rest) c1 c2 c3 = (rest2, s1 ++ s2)
   where 
     h_rand = randomInt 33 67 r
     lw = (fromIntegral w * h_rand `div` 100)
     rw = (fromIntegral w - lw)
-    (rest1, s1) = mondrian x y lw h rest
-    (rest2, s2) = mondrian (x + lw) y rw h rest1
+    (rest1, s1) = mondrian x y lw h rest c1 c2 c3
+    (rest2, s2) = mondrian (x + lw) y rw h rest1 c1 c2 c3
 
 --
 --  Split the region vertically so that we get one on top the other
 --
-v_split :: Int -> Int -> Int -> Int -> [Float] -> ([Float], String)
-v_split x y w h (r:rest) = (rest2, s1 ++ s2)
+--v_split :: Int -> Int -> Int -> Int -> [Float] -> ([Float], String)
+v_split x y w h (r:rest) c1 c2 c3 = (rest2, s1 ++ s2)
   where 
     v_rand = randomInt 33 67 r
     th = (fromIntegral h * v_rand `div` 100)
     bh = (fromIntegral h - th)
-    (rest1, s1) = mondrian x y w th rest
-    (rest2, s2) = mondrian x (y + th) w bh rest1
+    (rest1, s1) = mondrian x y w th rest c1 c2 c3
+    (rest2, s2) = mondrian x (y + th) w bh rest1 c1 c2 c3
 
 --
 --  Select the random fill color for the region.  The first random number
 --  determines the general colors class (Yellow, Blue, Green, Red or White)
 --  and the second selects the specific color within the class
 --
-randomColor :: Int -> Int -> Int -> Int -> Float -> Float -> String
-randomColor x y w h r1 r2
- -- we need random colour to take, as parameters, whatever the user types in
- -- then, based on what the user inputs, we will choose random colours from that list (maybe 2 lists? 3?)
+randomColor :: Int -> Int -> Int -> Int -> Float -> [Char] -> [Char] -> [Char] -> String
 
--- WHICH MEANS we also need mondrian to take in our key word
+randomColor x y w h r c1 c2 c3 
+ | head c1 == '1' && head c2 == '1' && head c3 == '1' = fromList r (oranges ++ greys ++ whites)
+ | head c1 == '1' && head c2 == '1' && head c3 == '2' = fromList r (oranges ++ greys ++ yellows)
+ | head c1 == '1' && head c2 == '1' && head c3 == '3' = fromList r (oranges ++ greys ++ reds)
+ | head c1 == '1' && head c2 == '2' && head c3 == '1' = fromList r (oranges ++ pinks ++ whites)
+ | head c1 == '1' && head c2 == '2' && head c3 == '2' = fromList r (oranges ++ pinks ++ yellows)
+ | head c1 == '1' && head c2 == '2' && head c3 == '3' = fromList r (oranges ++ pinks ++ reds)
+ | head c1 == '1' && head c2 == '3' && head c3 == '1' = fromList r (oranges ++ purples ++ whites)
+ | head c1 == '1' && head c2 == '3' && head c3 == '2' = fromList r (oranges ++ purples ++ yellows)
+ | head c1 == '1' && head c2 == '3' && head c3 == '3' = fromList r (oranges ++ purples ++ reds)
 
-  | r1 * ltotal <= lul^8 = fromList r2 yellows
-  | r1 * ltotal <= lul^8 + lur^8 = fromList r2 blues
-  | r1 * ltotal <= lul^8 + lur^8 + lll^8 = fromList r2 greens
-  | r1 * ltotal <= lul^8 + lur^8 + lll^8 + llr^8 = fromList r2 reds
-  | otherwise = fromList r2 whites
-  where
-    yellows = ["gold", "goldenrod", "orange", "sandybrown", "yellow"]
-    blues = ["royalblue", "skyblue", "mediumslateblue", "powderblue", "cornflowerblue"] 
-    reds = ["salmon", "tomato", "coral", "indianred", "pink"]
-    greens = ["palegreen", "limegreen", "greenyellow", "yellowgreen", "chartreuse"]
-    whites = ["beige", "ivory", "cornsilk", "floralwhite", "whitesmoke"]
-    lul = sqrt (xc ^ 2 + yc ^ 2)
-    lur = sqrt ((fromIntegral width - xc) ^ 2 + yc ^ 2)
-    lll = sqrt (xc ^ 2 + (fromIntegral height - yc) ^ 2)
-    llr = sqrt ((fromIntegral width - xc) ^ 2 + (fromIntegral height - yc) ^ 2)
-    xc = fromIntegral x + (fromIntegral w) / 2
-    yc = fromIntegral y + (fromIntegral h) / 2
-    -- 
-    --  At 1.0, there are no white regions.  Increasing the 1.0 to a larger
-    --  value will cause white regions to be included in the output.
-    --
-    ltotal = 1.0 * (lul^8 + lur^8 + lll^8 + llr^8)
+ | head c1 == '2' && head c2 == '1' && head c3 == '1' = fromList r (browns ++ greys ++ whites)
+ | head c1 == '2' && head c2 == '1' && head c3 == '2' = fromList r (browns ++ greys ++ yellows)
+ | head c1 == '2' && head c2 == '1' && head c3 == '3' = fromList r (browns ++ greys ++ reds)
+ | head c1 == '2' && head c2 == '2' && head c3 == '1' = fromList r (browns ++ pinks ++ whites)
+ | head c1 == '2' && head c2 == '2' && head c3 == '2' = fromList r (browns ++ pinks ++ yellows)
+ | head c1 == '2' && head c2 == '2' && head c3 == '3' = fromList r (browns ++ pinks ++ reds)
+ | head c1 == '2' && head c2 == '3' && head c3 == '1' = fromList r (browns ++ purples ++ whites)
+ | head c1 == '2' && head c2 == '3' && head c3 == '2' = fromList r (browns ++ purples ++ yellows)
+ | head c1 == '2' && head c2 == '3' && head c3 == '3' = fromList r (browns ++ purples ++ reds)
+
+ | head c1 == '3' && head c2 == '1' && head c3 == '1' = fromList r (blues ++ greys ++ whites)
+ | head c1 == '3' && head c2 == '1' && head c3 == '2' = fromList r (blues ++ greys ++ yellows)
+ | head c1 == '3' && head c2 == '1' && head c3 == '3' = fromList r (blues ++ greys ++ reds)
+ | head c1 == '3' && head c2 == '2' && head c3 == '1' = fromList r (blues ++ pinks ++ whites)
+ | head c1 == '3' && head c2 == '2' && head c3 == '2' = fromList r (blues ++ pinks ++ yellows)
+ | head c1 == '3' && head c2 == '2' && head c3 == '3' = fromList r (blues ++ pinks ++ reds)
+ | head c1 == '3' && head c2 == '3' && head c3 == '1' = fromList r (blues ++ purples ++ whites)
+ | head c1 == '3' && head c2 == '3' && head c3 == '2' = fromList r (blues ++ purples ++ yellows)
+ | head c1 == '3' && head c2 == '3' && head c3 == '3' = fromList r (blues ++ purples ++ reds)
+
+ | head c1 == '4' && head c2 == '1' && head c3 == '1' = fromList r (greens ++ greys ++ whites)
+ | head c1 == '4' && head c2 == '1' && head c3 == '2' = fromList r (greens ++ greys ++ yellows)
+ | head c1 == '4' && head c2 == '1' && head c3 == '3' = fromList r (greens ++ greys ++ reds)
+ | head c1 == '4' && head c2 == '2' && head c3 == '1' = fromList r (greens ++ pinks ++ whites)
+ | head c1 == '4' && head c2 == '2' && head c3 == '2' = fromList r (greens ++ pinks ++ yellows)
+ | head c1 == '4' && head c2 == '2' && head c3 == '3' = fromList r (greens ++ pinks ++ reds)
+ | head c1 == '4' && head c2 == '3' && head c3 == '1' = fromList r (greens ++ purples ++ whites)
+ | head c1 == '4' && head c2 == '3' && head c3 == '2' = fromList r (greens ++ purples ++ yellows)
+ | head c1 == '4' && head c2 == '3' && head c3 == '3' = fromList r (greens ++ purples ++ reds) 
+ | otherwise = fromList r whites
+ where
+   reds = ["indianred","lightcoral","salmon","darksalmon","lightsalmon","crimson","red","firebrick","darkred"]
+   pinks = ["pink","lightpink","hotpink","deeppink","mediumvioletred","palevioletred"]
+   oranges = ["lightsalmon","coral","tomato","orangered","darkorange","orange"]
+   yellows = ["gold","yellow","lightyellow","lemonchiffon","lightgoldenrodyellow","papayawhip","moccasin","peachpuff","palegoldenrod","khaki","darkkhaki"]
+   purples = ["lavender","thistle","plum","violet","orchid","fuchsia","magenta","mediumorchid","mediumpurple","rebeccapurple","blueviolet","darkviolet","darkorchid","darkmagenta","purple","indigo","slateblue","darkslateblue","mediumslateblue"]
+   greens = ["greenyellow","chatreuse","lawngreen","lime","limegreen","palegreen","lightgreen","mediumspringgreen","springgreen","mediumseagreen","seagreen","forestgreen","green","darkgreen","olivedrab","olive","darkolivegreen","mediumaquamarine","darkseagreen","lightseagreen","darkcyan","teal"]
+   blues = ["aqua","cyan","lightcyan","paleturquoise","aquamarine","turquoise","mediumturquoise","cadetblue","steelblue","lightsteelblue","powderblue","lightblue","skyblue","lightskyblue","deepskyblue","dodgerblue","cornflowerblue","mediumslateblue","royalblue","blue","mediumblue","darkblue","navy","midnightblue"]
+   browns = ["cornsilk","blachedalmond","bisque","navajowhite","wheat","burlywood","tan","rosybrown","sandybrown","goldenrod","darkgoldenrod","peru","chocolate","saddlebrown","sienna","brown","maroon"]
+   whites = ["white","snow","honeydew","mintcream","azure","aliceblue","ghostwhite","whitesmoke","seashell","beige","oldlace","floralwhite","ivory","antiquewhite","linen","lavenderblush","mistyrose"]
+   greys = ["gainsboro","lightgray","silver","darkgray","gray","dimgray","lightslategray","slategray","darkslategrey","black"]
 
 --
 --  Select an item from a list based on a value between 0.0 and 1.0.  At 0.0
@@ -234,12 +258,13 @@ main = do
   putStrLn("\nWhat would you like to name your masterpiece?")
   masterpiece <- getLine
   putStrLn("Bob Ross is doing his work...")
-  
+  ---colourlist = [(read clr1 :: Int), (read clr2 :: Int), (read clr3 :: Int)]
+  -- might be easier to implement this using a list of colours... hmm
   let prefix = "<html><head></head><body>\n" ++
                "<svg width=\"" ++ (show width) ++ 
                "\" height=\"" ++ (show height) ++ "\">"
-      image = snd (mondrian 0 0 width height randomValues)
+      image = snd (mondrian 0 0 width height randomValues clr1 clr2 clr3)
       suffix = "</svg>\n</html>"
 
-  writeFile "mondrian.html" (prefix ++ image ++ suffix)
+  writeFile (masterpiece ++ ".html") (prefix ++ image ++ suffix)
   putStrLn(masterpiece ++ " is complete!")
