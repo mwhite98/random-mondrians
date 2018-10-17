@@ -1,10 +1,9 @@
 -- WHAT DID I DO??
 -- Cleaned up code (added comments, types etc.)
--- opacity / fade --> why isn't fade having any effect on gradient??
+-- opacity / fade
 
 -- WHAT DO I WANT/NEED TO DO??
 -- Go over questions being asked
--- figure out fade
 -- tests
 -- lil write up for wiki
 -- go over submission specs, make sure we're meeting all standards
@@ -107,7 +106,7 @@ mondrian x y p w h (r:s:rest) (h1:h2:h3) g c1 c2 c3
                          " stroke=\"white\" stroke-width=\"0.5\" fill=\"" ++ 
                          (randomColor x y p w h r h2 g c1 c2 c3) ++
                          "\"" ++ 
-                         " opacity=" ++ 
+                         " opacity=\"" ++ 
                          (if g then (fade y) else show 1.0) ++
                          "\" />\n") 
   where 
@@ -171,15 +170,15 @@ c_curl x y p w h (r:rest) (h1:h2:h3) g c1 c2 c3 = (rest1, s1)
 --
 fade :: Int -> String
 fade y
- | y <= (height `div` 10) = show 0.1
- | y <= (height `div` 9) = show 0.2
- | y <= (height `div` 8) = show 0.3
- | y <= (height `div` 7) = show 0.4
- | y <= (height `div` 6) = show 0.5
- | y <= (height `div` 5) = show 0.6
- | y <= (height `div` 4) = show 0.7
- | y <= (height `div` 3) = show 0.8
- | y <= (height `div` 2) = show 0.9
+ | y <= (height `div` 10) = show 0.01
+ | y <= (height `div` 9) = show 0.1
+ | y <= (height `div` 8) = show 0.2
+ | y <= (height `div` 7) = show 0.2
+ | y <= (height `div` 6) = show 0.3
+ | y <= (height `div` 5) = show 0.4
+ | y <= (height `div` 4) = show 0.5
+ | y <= (height `div` 3) = show 0.5
+ | y <= (height `div` 2) = show 0.8
  | otherwise = show 1.0
 
 --
