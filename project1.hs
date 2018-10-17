@@ -101,10 +101,10 @@ mondrian x y p w h (r:s:rest) (h1:h2:h3) g c1 c2 c3
   -- rand1 low high x = ((high - low) * x) + low
   -- rand1 = ((width of region - splitlow) * r) + splitlow
   -- hs: if rand1 < width of region, then split
-	
-	
-	
-	
+
+  
+  
+  
 --
 --  Split the region both horizontally and vertically
 --
@@ -218,7 +218,7 @@ randomColor x y p w h r h1 g c1 c2 c3
    
 gradientColor :: Int -> Int -> Int -> Int -> Int -> Double -> Double -> Bool -> [Char] -> [Char] -> [Char] -> String
 gradientColor x y p w h h1 r g c1 c2 c3 
- -- | h1 > 17 = gradientColor x y p w h h1 (r-17) g c1 c2 c3
+ | h1 > 17 = gradientColor x y p w h h1 (r-17) g c1 c2 c3
  | head c1 == '1' && head c2 == '1' && head c3 == '1' = (merge (merge oranges greys) whites) !! round r
  | head c1 == '1' && head c2 == '1' && head c3 == '2' = (merge (merge oranges greys) yellows) !! round r --fromList r (oranges ++ greys ++ yellows)
  | head c1 == '1' && head c2 == '1' && head c3 == '3' = (merge (merge oranges greys) reds) !! round r --fromList r (oranges ++ greys ++ reds)
@@ -286,28 +286,15 @@ fromList :: Double -> [String] -> String
 fromList 1.0 vals = vals !! (length vals - 1)
 fromList r vals = vals !! (floor (r * fromIntegral (length vals)))
 
-{-
 
-what is your favourite season?
-1. Summer -> Orange
-2. Autumn -> brown
-3. Winter -> blues
-4. Spring -> greens
-
-what makes you think of home?
-1. lonely -> grey
-2. love -> pink
-3. family -> purple
-
-what helps you wind down?
-1. petting a cat -> white
-2. sunny day -> yellow
-3. physical activity -> red
--}
-
-
+--
+-- higher order sanitation function
+-- input is the IO string which we need to sanitize
+-- (h:t) is a string of boolean functions which input must maintain
+-- prevents happy little accidents
+-- 
 sanitation :: [Char] -> [(Char -> Bool)] -> IO () 
-sanitation input [] = putStrLn ("\nThank You!\n")
+sanitation input [] = putStrLn ("\n")
 sanitation input (h:t)  = do
  if (input == []) then do {
   ; putStrLn("\nInvalid entry. Please try again!\n")
@@ -330,44 +317,63 @@ sanitation input (h:t)  = do
 --
 main :: IO ()
 main = do
-  --  Right now, the program will generate a different sequence of random
-  --  numbers each time it is run.  If you want the same sequence each time
-  --  use "let seed = 0" instead of "seed <- randomRIO (0, 100000 :: Int)"
-
+  
+ -- when seed = 0, the output image will be the same every time.
+ -- when seed = random, the output image will be completely random every time
+ -- ***note*** keeping seed = 0 for testing purposes
   let seed = 0
   --seed <- randomRIO (0, 100000 :: Int)
   let randomValues = randomList seed
   let gradientValues = take 20000 gradientList
 
-  -- we would need to get keywords from the user here
+  -- gets the artists name
+  -- name will be at top of HTML file (seen in top right above photo)
   putStrLn("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nWhat is your name?\n")
   theArtist <- getLine
   sanitation theArtist [isAlpha]
    
-  -- putStrLn(show (take 25 gradientValues))
+  -- first colour palette
+  -- 1 = oranges
+  -- 2 = browns
+  -- 3 = blues
+  -- 4 = greens
   putStrLn("Please type a number from 1 to 4:\nwhat is your favourite season? \n\n1. Summer\n2. Autumn\n3. Winter\n4. Spring")
   clr1 <- getLine
   sanitation clr1 [isDigit,  (`elem` ['1','2','3','4'])]
   
-  putStrLn("\nPlease type a number from 1 to 3:\nWhat makes you think of home?\n1. Lonely\n2. Love\n3. Family")
+  -- second colour palette
+  -- 1 = greys
+  -- 2 = pinks
+  -- 3 = purples
+  putStrLn("Please type a number from 1 to 3:\nWhat makes you think of home?\n1. Lonely\n2. Love\n3. Family")
   clr2 <- getLine
   sanitation clr2 [isDigit, (`elem` ['1','2','3'])]
   
-  putStrLn("\nPlease type a number from 1 to 3:\nWhat helps you wind down?\n1. Petting a cat\n2. A sunny day\n3. Physical activity")
+  -- third & final colour palette
+  -- 1 = whites
+  -- 2 = yellows
+  -- 3 = reds
+  putStrLn("Please type a number from 1 to 3:\nWhat helps you wind down?\n1. Petting a cat\n2. A sunny day\n3. Physical activity")
   clr3 <- getLine
   sanitation clr3 [isDigit, (`elem` ['1','2','3'])]
   
-  putStrLn("\nPlease type a number from 1 to 2:\nWould you prefer a gradient or random colours?\n1. Gradient\n2. Random")
+  -- decides on image type
+  -- 1 = gradient (fewer colours, more consistency with colour spread)
+  -- 2 = random (more colours, completely random colour spread)
+  putStrLn("Please type a number from 1 to 2:\nWould you prefer a gradient or random colours?\n1. Gradient\n2. Random")
   answer <- getLine
   sanitation answer [isDigit, (`elem` ['1','2'])]
 
-
+  -- names the image & the file
   putStrLn("\nWhat would you like to name your masterpiece?")
   masterpiece <- getLine
-  sanitation masterpiece [isAlpha]
+  sanitation masterpiece [isAlpha] -- (/= '.')
 
+  -- may he rest in peace
   putStrLn("Bob Ross is doing his work...")
 
+  
+  -- build the actual image based on answers given above:
   if (head answer == '1') 
   then do
     let prefix = "<html><head><title>" ++
