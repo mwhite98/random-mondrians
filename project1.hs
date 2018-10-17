@@ -1,3 +1,14 @@
+-- WHAT DID I DO??
+-- Cleaned up code (added comments, types etc.)
+-- opacity / fade --> why isn't fade having any effect on gradient??
+
+-- WHAT DO I WANT/NEED TO DO??
+-- Go over questions being asked
+-- figure out fade
+-- tests
+-- lil write up for wiki
+-- go over submission specs, make sure we're meeting all standards
+
 --
 -- Original Template by Dr. Ben Stephenson, from:
 -- http://nifty.stanford.edu/2018/stephenson-mondrian-art/
@@ -20,34 +31,35 @@ height :: Int
 height = 768
 
 --
--- Other constants used during the generation of the image
+-- split_low: Controls minimum split size
+-- split_penalty: Controls size of our regions (smaller penalty means smaller regions)
+--   = 1.5:  Big rounded circles or squares
+--   = 0.75: Many tiny circles or squares
 --
--- changing the split penalty allows us to change the size of our regions (smaller penalty = smaller regions
--- split_penalty -> 1.5 = big rounded squares
--- split_penalty -> 0.75 = many tiny circles
--- changing split low allows us to control the minimum split size
-
 split_low = 100 :: Int
 split_penalty = 0.75 :: Double
 
---
--- Generate and return a list of 20000 random floating point numbers between 
--- 0 and 1.  (Increase the 20000 if you ever run out of random values).
 -- 
-
---randomList :: Int -> [Double]
---randomList seed = take 999 [0.001, 0.002..1]
-
-
+-- Generates and returns a list of 20000 random doubles between 0 and 1, 
+-- for use in generating random colours if 'Random' was chosen.
+--
 randomList :: Int -> [Double]
 randomList seed = take 20000 (rl_helper (mkStdGen seed))
 
-gradientList :: [Double]
-gradientList = take 20000 ([0..17] ++ gradientList)
-
+--
+-- Helper for randomList by generating one random Double between 0 and 1.
+--
 rl_helper :: StdGen -> [Double]
 rl_helper g = fst vg : rl_helper (snd vg)
   where vg = randomR (0.0, 1.0 :: Double) g
+
+--
+-- Generates and returns a list of 20000 random doubles between 0 and 17, 
+-- for use in generating random colours if 'Gradient' was chosen.
+-- Choose from 18 options as there are 3 different colour lists of 6 each.
+--
+gradientList :: [Double]
+gradientList = take 20000 ([0..17] ++ gradientList)
 
 --
 -- Compute an integer between low and high from a (presumably random) floating
@@ -56,60 +68,58 @@ rl_helper g = fst vg : rl_helper (snd vg)
 randomInt :: Int -> Int -> Double -> Int
 randomInt low high x = round ((fromIntegral (high - low) * x) + fromIntegral low)
 
-
 --
--- Generate the tag for a rectangle with random color.  Replace the 
--- implementation of this function so that it generates all of the tags
--- needed for a piece of random Mondrian art.
+-- Generates portion of HTML for a rectangle or oval with a random colour.
 -- 
 -- Parameters:
 --   x, y: The upper left corner of the region
+--   p: Value for rounded corners of oval, if desired
 --   w, h: The width and height of the region
 --   r:s:rest: A list of random floating point values between 0 and 1
---   c1, c2, c3: colour hues chosen by user
+--   c1, c2, c3: Colour hues chosen by user
+--   h1, h2, h3: Colour hues for gradient list
+--   g: True if 'gradient' was selected by user
 --
 -- Returns:
---   [Float]: The remaining, unused random values
---   String: The SVG tags that draw the image
+--   [Double]: The remaining, unused random values
+--   [Char]: HTML that draws the image
 --
-
--- mondrian :: Int -> Int -> Int -> Int -> Int -> [Float] -> [Float] -> Bool -> [Char] -> [Char] -> [Char] -> ([Float], String)
+-- rand1: Random number to determine whether region should split horizontally
+-- rand2: Random number to determine whether region should split vertically
+-- hs: Horizontal split, if rand1 < width of region, then split
+-- vs: Vertical split, if rand2 < height of the region, then split
+--
+mondrian :: Int -> Int -> Int -> Int -> Int -> [Double] -> [Double] -> Bool -> [Char] -> [Char] -> [Char] -> ([Double], [Char])
 mondrian _ _ _ 0 _ rvals gvals _ _ _ _ = (rvals, "")
 mondrian _ _ _ _ 0 rvals gvals _ _ _ _ = (rvals, "")
 mondrian x y p w h (r:s:rest) (h1:h2:h3) g c1 c2 c3
-  -- hs = horizontal split
-  -- vs = vertical split
   | hs && vs           = b_split x y p (w) h rest (h1:h2:h3) g c1 c2 c3
   | hs                 = h_split x y p (w) h rest (h1:h2:h3) g c1 c2 c3
   | vs                 = v_split x y p (w) h rest (h1:h2:h3) g c1 c2 c3
   | p <= 0             = c_curl x y p (w) h rest (h1:h2:h3) g c1 c2 c3
   | otherwise = (s:rest, "<rect x=" ++ (show x) ++ 
                          " y=" ++ (show y) ++
-                         " rx=" ++ (show p) ++ " ry=" ++ (show p) ++
+                         -- To generate ovals instead, replace following line with:
+                         -- " rx=" ++ (show p) ++ " ry=" ++ (show p) ++
+                         " rx=\"0\"" ++ " ry=\"0\"" ++
                          " width=" ++ (show w) ++ 
                          " height=" ++ (show h) ++
                          " stroke=\"white\" stroke-width=\"0.5\" fill=\"" ++ 
                          (randomColor x y p w h r h2 g c1 c2 c3) ++
-                         "\"" ++ " opacity=\"1.0\"" ++ "/>\n") 
+                         "\"" ++ 
+                         " opacity=" ++ 
+                         (if g then (fade y) else show 1.0) ++
+                         "\" />\n") 
   where 
     rand1 = randomInt split_low (round (fromIntegral w * split_penalty)) r
     hs = if rand1 < w then True else False
     rand2 = randomInt split_low (round (fromIntegral h * split_penalty)) s
     vs = if rand2 < h then True else False
 
-  --rand2 is same as rand1 but for height (vertical)
-  -- rand1 low high x = ((high - low) * x) + low
-  -- rand1 = ((width of region - splitlow) * r) + splitlow
-  -- hs: if rand1 < width of region, then split
-
-  
-  
-  
 --
 --  Split the region both horizontally and vertically
 --
---b_split :: Int -> Int -> Int -> Int -> [Float] -> ([Float], String)
--- 37 and 67
+b_split :: Int -> Int -> Int -> Int -> Int -> [Double] -> [Double] -> Bool -> [Char] -> [Char] -> [Char] -> ([Double], [Char])
 b_split x y p w h (r:s:rest) (h1:h2:h3) g c1 c2 c3 = (rest4, s1 ++ s2 ++ s3 ++ s4)
   where 
     h_rand = randomInt 37 67 r
@@ -126,7 +136,7 @@ b_split x y p w h (r:s:rest) (h1:h2:h3) g c1 c2 c3 = (rest4, s1 ++ s2 ++ s3 ++ s
 --
 --  Split the region horizontally so that we get two that are side by side
 --
---h_split :: Int -> Int -> Int -> Int -> [Float] -> ([Float], String)
+h_split :: Int -> Int -> Int -> Int -> Int -> [Double] -> [Double] -> Bool -> [Char] -> [Char] -> [Char] -> ([Double], [Char])
 h_split x y p w h (r:rest) (h1:h2:h3) g c1 c2 c3 = (rest2, s1 ++ s2)
   where 
     h_rand = randomInt 37 67 r
@@ -138,7 +148,7 @@ h_split x y p w h (r:rest) (h1:h2:h3) g c1 c2 c3 = (rest2, s1 ++ s2)
 --
 --  Split the region vertically so that we get one on top the other
 --
---v_split :: Int -> Int -> Int -> Int -> [Float] -> ([Float], String)
+v_split :: Int -> Int -> Int -> Int -> Int -> [Double] -> [Double] -> Bool -> [Char] -> [Char] -> [Char] -> ([Double], [Char])
 v_split x y p w h (r:rest) (h1:h2:h3) g c1 c2 c3 = (rest2, s1 ++ s2)
   where 
     v_rand = randomInt 37 67 r
@@ -147,19 +157,36 @@ v_split x y p w h (r:rest) (h1:h2:h3) g c1 c2 c3 = (rest2, s1 ++ s2)
     (rest1, s1) = mondrian x y p w th rest h3 g c1 c2 c3
     (rest2, s2) = mondrian x (y + th) p w bh rest1 h3 g c1 c2 c3
 
+--
+-- Round the region's edges to generate an oval 
+--
+c_curl :: Int -> Int -> Int -> Int -> Int -> [Double] -> [Double] -> Bool -> [Char] -> [Char] -> [Char] -> ([Double], [Char])
 c_curl x y p w h (r:rest) (h1:h2:h3) g c1 c2 c3 = (rest1, s1)
   where 
     p_rand = randomInt 37 67 r
     (rest1, s1) = mondrian x y (p + p_rand) w h rest h3 g c1 c2 c3
 
+--
+-- If 'Gradient' was selected, gradually increase opacity of the image vertically
+--
+fade :: Int -> String
+fade y
+ | y <= (height `div` 10) = show 0.1
+ | y <= (height `div` 9) = show 0.2
+ | y <= (height `div` 8) = show 0.3
+ | y <= (height `div` 7) = show 0.4
+ | y <= (height `div` 6) = show 0.5
+ | y <= (height `div` 5) = show 0.6
+ | y <= (height `div` 4) = show 0.7
+ | y <= (height `div` 3) = show 0.8
+ | y <= (height `div` 2) = show 0.9
+ | otherwise = show 1.0
 
 --
---  Select the random fill color for the region.  The first random number
---  determines the general colors class (Yellow, Blue, Green, Red or White)
---  and the second selects the specific color within the class
+-- Select the random fill colour for the region, if 'Random' was selected. 
+-- Colour generated depends on properties chosen by user, but is otherwise totally random.
 --
 randomColor :: Int -> Int -> Int -> Int -> Int -> Double -> Double -> Bool -> [Char] -> [Char] -> [Char] -> String
-
 randomColor x y p w h r h1 g c1 c2 c3 
  | g == True = gradientColor x y p w h r h1 g c1 c2 c3
  | head c1 == '1' && head c2 == '1' && head c3 == '1' = fromList r (oranges ++ greys ++ whites)
@@ -214,11 +241,13 @@ randomColor x y p w h r h1 g c1 c2 c3
    whites = ["white","honeydew","aliceblue","seashell","beige","mistyrose"]
    greys = ["gainsboro","silver","gray","lightslategray","darkslategrey","black"]
    
--- WHAT IF WE USED !! INSTEAD OF FROMLIST TO GET    
-   
+--
+-- Select the random fill colour for the region, if 'Gradient' was selected. 
+-- Colour generated depends on properties chosen by user, but is done as a gradient.
+--    
 gradientColor :: Int -> Int -> Int -> Int -> Int -> Double -> Double -> Bool -> [Char] -> [Char] -> [Char] -> String
 gradientColor x y p w h h1 r g c1 c2 c3 
- | h1 > 17 = gradientColor x y p w h h1 (r-17) g c1 c2 c3
+ -- | h1 > 17 = gradientColor x y p w h h1 (r-17) g c1 c2 c3
  | head c1 == '1' && head c2 == '1' && head c3 == '1' = (merge (merge oranges greys) whites) !! round r
  | head c1 == '1' && head c2 == '1' && head c3 == '2' = (merge (merge oranges greys) yellows) !! round r --fromList r (oranges ++ greys ++ yellows)
  | head c1 == '1' && head c2 == '1' && head c3 == '3' = (merge (merge oranges greys) reds) !! round r --fromList r (oranges ++ greys ++ reds)
@@ -271,8 +300,10 @@ gradientColor x y p w h h1 r g c1 c2 c3
    whites = ["white","honeydew","aliceblue","seashell","beige","mistyrose"]
    greys = ["gainsboro","silver","gray","lightslategray","darkslategrey","black"]
 
-
--- function to merge our colourlists. instead of red ++ blue ++ green we'll get a more more mixed list
+--
+-- Merges colour lists. 
+-- ex. Instead of red ++ blue ++ green, we'll get a more mixed list
+--
 merge :: [a] -> [a] -> [a]
 merge [] ys = ys
 merge (x:xs) ys = x:merge ys xs   
@@ -286,12 +317,11 @@ fromList :: Double -> [String] -> String
 fromList 1.0 vals = vals !! (length vals - 1)
 fromList r vals = vals !! (floor (r * fromIntegral (length vals)))
 
-
 --
--- higher order sanitation function
--- input is the IO string which we need to sanitize
--- (h:t) is a string of boolean functions which input must maintain
--- prevents happy little accidents
+-- Higher order sanitation function
+--   input: The IO string we need to sanitize
+--   (h:t): String of boolean functions which input must maintain
+-- Prevents happy little accidents
 -- 
 sanitation :: [Char] -> [(Char -> Bool)] -> IO () 
 sanitation input [] = putStrLn ("\n")
@@ -308,31 +338,31 @@ sanitation input (h:t)  = do
    } 
    else do {
     ; sanitation input t
-	}
-
-   
+  }
    
 --
 -- The main program which generates and outputs mondrian.html.
 --
 main :: IO ()
 main = do
-  
- -- when seed = 0, the output image will be the same every time.
- -- when seed = random, the output image will be completely random every time
- -- ***note*** keeping seed = 0 for testing purposes
+
+  -- seed = 0 --> Output image will be the same every time.
+  -- seed = random --> Program generates different sequence of random numbers each time it is run.
+  --   ie. The output image will be completely random every time
+  -- NOTE: keeping seed = 0 for testing purposes
+
   let seed = 0
   --seed <- randomRIO (0, 100000 :: Int)
   let randomValues = randomList seed
   let gradientValues = take 20000 gradientList
 
-  -- gets the artists name
-  -- name will be at top of HTML file (seen in top right above photo)
+  -- Gets the artists name, to be displayed at top of HTML file
+  -- we would need to get keywords from the user here
   putStrLn("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nWhat is your name?\n")
   theArtist <- getLine
   sanitation theArtist [isAlpha]
-   
-  -- first colour palette
+
+  -- First colour palette
   -- 1 = oranges
   -- 2 = browns
   -- 3 = blues
@@ -340,40 +370,40 @@ main = do
   putStrLn("Please type a number from 1 to 4:\nwhat is your favourite season? \n\n1. Summer\n2. Autumn\n3. Winter\n4. Spring")
   clr1 <- getLine
   sanitation clr1 [isDigit,  (`elem` ['1','2','3','4'])]
-  
-  -- second colour palette
+
+  -- Second colour palette
   -- 1 = greys
   -- 2 = pinks
   -- 3 = purples
-  putStrLn("Please type a number from 1 to 3:\nWhat makes you think of home?\n1. Lonely\n2. Love\n3. Family")
+  putStrLn("\nPlease type a number from 1 to 3:\nWhat makes you think of home?\n1. Lonely\n2. Love\n3. Family")
   clr2 <- getLine
   sanitation clr2 [isDigit, (`elem` ['1','2','3'])]
-  
-  -- third & final colour palette
+
+  -- Final colour palette
   -- 1 = whites
   -- 2 = yellows
   -- 3 = reds
-  putStrLn("Please type a number from 1 to 3:\nWhat helps you wind down?\n1. Petting a cat\n2. A sunny day\n3. Physical activity")
+  putStrLn("\nPlease type a number from 1 to 3:\nWhat helps you wind down?\n1. Petting a cat\n2. A sunny day\n3. Physical activity")
   clr3 <- getLine
   sanitation clr3 [isDigit, (`elem` ['1','2','3'])]
   
-  -- decides on image type
+  -- Decides on image type
   -- 1 = gradient (fewer colours, more consistency with colour spread)
   -- 2 = random (more colours, completely random colour spread)
-  putStrLn("Please type a number from 1 to 2:\nWould you prefer a gradient or random colours?\n1. Gradient\n2. Random")
+  putStrLn("\nPlease type a number from 1 to 2:\nWould you prefer a gradient or random colours?\n1. Gradient\n2. Random")
   answer <- getLine
   sanitation answer [isDigit, (`elem` ['1','2'])]
 
-  -- names the image & the file
+  -- Names the image & the file
   putStrLn("\nWhat would you like to name your masterpiece?")
   masterpiece <- getLine
-  sanitation masterpiece [isAlpha] -- (/= '.')
+  sanitation masterpiece [isAlpha]
 
-  -- may he rest in peace
   putStrLn("Bob Ross is doing his work...")
 
-  
-  -- build the actual image based on answers given above:
+  -- Build the actual image based on answers given above
+  -- First case is for gradients, second is for random mondrians
+
   if (head answer == '1') 
   then do
     let prefix = "<html><head><title>" ++
