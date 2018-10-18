@@ -1,16 +1,23 @@
 -- WHAT DID I DO??
 -- Cleaned up code (added comments, types etc.)
 -- opacity / fade
+-- lil write up for wiki
+-- Reviewed questions
+-- update guard to only allow up to 1 digit [1...4] to be entered
 
 -- WHAT DO I WANT/NEED TO DO??
--- Go over questions being asked
--- tests
--- lil write up for wiki
--- go over submission specs, make sure we're meeting all standards
+-- tests, this is all that's said on the proposal about testing:
+--    Does the code work? They will first test it on test cases you suggest, and
+--    then test it on their own test cases.
+-- so do we need to write any????
+-- meet up and make sure we both understand all code for presentation
 
 --
 -- Original Template by Dr. Ben Stephenson, from:
 -- http://nifty.stanford.edu/2018/stephenson-mondrian-art/
+-- Specifically, templates for global variables, randomList, rl_helper, randomInt,
+--   mondrian, the split functions, fromList, and generating SVG tag in main were
+--   used in this project.
 --
 -- Generate and output a Mondrian-style image as an SVG tag within an HTML 
 -- document.
@@ -19,6 +26,7 @@ import System.IO
 import Control.Monad (replicateM, when, unless)
 import System.Random (randomRIO, StdGen, randomR, mkStdGen)
 import Data.Char
+import Data.String
 
 --
 -- The width and height of the image being generated.
@@ -171,13 +179,13 @@ c_curl x y p w h (r:rest) (h1:h2:h3) g c1 c2 c3 = (rest1, s1)
 fade :: Int -> String
 fade y
  | y <= (height `div` 10) = show 0.01
- | y <= (height `div` 9) = show 0.1
- | y <= (height `div` 8) = show 0.2
+ | y <= (height `div` 9) = show 0.05
+ | y <= (height `div` 8) = show 0.1
  | y <= (height `div` 7) = show 0.2
- | y <= (height `div` 6) = show 0.3
- | y <= (height `div` 5) = show 0.4
+ | y <= (height `div` 6) = show 0.25
+ | y <= (height `div` 5) = show 0.3
  | y <= (height `div` 4) = show 0.5
- | y <= (height `div` 3) = show 0.5
+ | y <= (height `div` 3) = show 0.7
  | y <= (height `div` 2) = show 0.8
  | otherwise = show 1.0
 
@@ -238,7 +246,7 @@ randomColor x y p w h r h1 g c1 c2 c3
    blues = ["aqua","steelblue","deepskyblue","blue","navy","turquoise"]
    browns = ["burlywood","sandybrown","darkgoldenrod","saddlebrown","brown","goldenrod"]
    whites = ["white","honeydew","aliceblue","seashell","beige","mistyrose"]
-   greys = ["gainsboro","silver","gray","lightslategray","darkslategrey","black"]
+   greys = ["gainsboro","silver","gray","lightslategray","darkslategrey"]
    
 --
 -- Select the random fill colour for the region, if 'Gradient' was selected. 
@@ -297,7 +305,7 @@ gradientColor x y p w h h1 r g c1 c2 c3
    blues = ["aqua","steelblue","deepskyblue","blue","navy","turquoise"]
    browns = ["burlywood","sandybrown","darkgoldenrod","saddlebrown","brown","goldenrod"]
    whites = ["white","honeydew","aliceblue","seashell","beige","mistyrose"]
-   greys = ["gainsboro","silver","gray","lightslategray","darkslategrey","black"]
+   greys = ["gainsboro","silver","gray","lightslategray","darkslategrey"]
 
 --
 -- Merges colour lists. 
@@ -327,17 +335,55 @@ sanitation input [] = putStrLn ("\n")
 sanitation input (h:t)  = do
  if (input == []) then do {
   ; putStrLn("\nInvalid entry. Please try again!\n")
+  -- what are these next two lines doing?
   ; newInput <- getLine
-  ; sanitation newInput (h:t) 
+  ; sanitationHelper newInput (h:t) 
   }  
   else if (not (h $ head input)) then do {
    ; putStrLn("\nInvalid entry. Please try again!")
    ; newInput <- getLine
-   ; sanitation newInput (h:t)
+   ; sanitationHelper newInput (h:t)
    } 
    else do {
-    ; sanitation input t
+    ; sanitationHelper input t
   }
+
+-- 
+-- Checks that no more than 1 number is entered at a time
+--   input: The IO string we're checking
+--   (h:t): String of boolean functions which input must maintain
+--
+sanitationHelper :: String -> [Char -> Bool] -> IO ()
+sanitationHelper input [] = putStrLn ("\n")
+sanitationHelper input (h:t) = do
+ if ((length input) > 1) then do {
+  ; putStrLn("\nInvalid entry. Please try again!\n")
+  ; newInput <- getLine
+  ; sanitationHelper newInput (h:t)
+ }
+ else sanitation input (h:t)
+
+-- 
+-- Checks that characters are not numbers
+--   input: The IO string we're checking
+--   (h:t): String of boolean functions which input must maintain
+--
+alphaCheck :: String -> [Char -> Bool] -> IO ()
+alphaCheck input [] = putStrLn ("\n")
+alphaCheck input (h:t) = do
+ if (input == []) then do {
+  ; putStrLn("\nInvalid entry. Please try again!\n")
+  ; newInput <- getLine
+  ; alphaCheck newInput (h:t) 
+  }  
+  else if (not (h $ head input)) then do {
+   ; putStrLn("\nInvalid entry. Please try again!")
+   ; newInput <- getLine
+   ; alphaCheck newInput (h:t)
+   } 
+   else do {
+    ; alphaCheck input t
+   }
    
 --
 -- The main program which generates and outputs mondrian.html.
@@ -350,8 +396,8 @@ main = do
   --   ie. The output image will be completely random every time
   -- NOTE: keeping seed = 0 for testing purposes
 
-  let seed = 0
-  --seed <- randomRIO (0, 100000 :: Int)
+  -- let seed = 0
+  seed <- randomRIO (0, 100000 :: Int)
   let randomValues = randomList seed
   let gradientValues = take 20000 gradientList
 
@@ -359,44 +405,46 @@ main = do
   -- we would need to get keywords from the user here
   putStrLn("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nWhat is your name?\n")
   theArtist <- getLine
-  sanitation theArtist [isAlpha]
+  alphaCheck theArtist [isAlpha]
+  -- sanitation theArtist [isAlpha]
 
   -- First colour palette
   -- 1 = oranges
   -- 2 = browns
   -- 3 = blues
   -- 4 = greens
-  putStrLn("Please type a number from 1 to 4:\nwhat is your favourite season? \n\n1. Summer\n2. Autumn\n3. Winter\n4. Spring")
+  putStrLn("Please type a number from 1 to 4:\nWhat is your favourite season? \n\n1. Summer\n2. Autumn\n3. Winter\n4. Spring")
   clr1 <- getLine
-  sanitation clr1 [isDigit,  (`elem` ['1','2','3','4'])]
+  sanitationHelper clr1 [isDigit,  (`elem` ['1','2','3','4'])]
+  -- sanitation clr1 [isDigit,  (`elem` ['1','2','3','4'])]
 
   -- Second colour palette
   -- 1 = greys
   -- 2 = pinks
   -- 3 = purples
-  putStrLn("\nPlease type a number from 1 to 3:\nWhat makes you think of home?\n1. Lonely\n2. Love\n3. Family")
+  putStrLn("\nPlease type a number from 1 to 3:\nWhat makes your heart smile?\n1. Hobbies and Passions\n2. Friends and Family\n3. Culture and Experiences")
   clr2 <- getLine
-  sanitation clr2 [isDigit, (`elem` ['1','2','3'])]
+  sanitationHelper clr2 [isDigit, (`elem` ['1','2','3'])]
 
   -- Final colour palette
   -- 1 = whites
   -- 2 = yellows
   -- 3 = reds
-  putStrLn("\nPlease type a number from 1 to 3:\nWhat helps you wind down?\n1. Petting a cat\n2. A sunny day\n3. Physical activity")
+  putStrLn("\nPlease type a number from 1 to 3:\nHow are you feeling today?\n1. Pretty mediocre\n2. Happy!\n3. Under the weather")
   clr3 <- getLine
-  sanitation clr3 [isDigit, (`elem` ['1','2','3'])]
+  sanitationHelper clr3 [isDigit, (`elem` ['1','2','3'])]
   
   -- Decides on image type
   -- 1 = gradient (fewer colours, more consistency with colour spread)
   -- 2 = random (more colours, completely random colour spread)
   putStrLn("\nPlease type a number from 1 to 2:\nWould you prefer a gradient or random colours?\n1. Gradient\n2. Random")
   answer <- getLine
-  sanitation answer [isDigit, (`elem` ['1','2'])]
+  sanitationHelper answer [isDigit, (`elem` ['1','2'])]
 
   -- Names the image & the file
   putStrLn("\nWhat would you like to name your masterpiece?")
   masterpiece <- getLine
-  sanitation masterpiece [isAlpha]
+  alphaCheck masterpiece [isAlpha]
 
   putStrLn("Bob Ross is doing his work...")
 
