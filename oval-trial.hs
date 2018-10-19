@@ -234,7 +234,7 @@ randomColor x y p w h r h1 g c1 c2 c3 z
  | head c1 == '4' && head c2 == '3' && head c3 == '1' = fromList r (greens ++ purples ++ whites)
  | head c1 == '4' && head c2 == '3' && head c3 == '2' = fromList r (greens ++ purples ++ yellows)
  | head c1 == '4' && head c2 == '3' && head c3 == '3' = fromList r (greens ++ purples ++ reds) 
- | otherwise = fromList r whites
+ | otherwise = fromList r (merge reds (merge oranges (merge blues greens)))
  where
    reds = ["indianred","lightcoral","salmon","crimson","red","darkred"]
    pinks = ["pink","lightpink","hotpink","deeppink","mediumvioletred","palevioletred"]
@@ -245,7 +245,7 @@ randomColor x y p w h r h1 g c1 c2 c3 z
    blues = ["aqua","steelblue","deepskyblue","blue","navy","turquoise"]
    browns = ["burlywood","sandybrown","darkgoldenrod","saddlebrown","brown","goldenrod"]
    whites = ["white","honeydew","aliceblue","seashell","beige","mistyrose"]
-   greys = ["gainsboro","silver","gray","lightslategray","darkslategrey"]
+   greys = ["gainsboro","silver","gray","lightslategray","darkslategrey", "gray"]
    
 --
 -- Select the random fill colour for the region, if 'Gradient' was selected. 
@@ -293,7 +293,7 @@ gradientColor x y p w h h1 r g c1 c2 c3 z
  | head c1 == '4' && head c2 == '3' && head c3 == '1' = (merge (merge greens purples) whites) !! round r -- fromList r (greens ++ purples ++ whites)
  | head c1 == '4' && head c2 == '3' && head c3 == '2' = (merge (merge greens purples) yellows) !! round r -- fromList r (greens ++ purples ++ yellows)
  | head c1 == '4' && head c2 == '3' && head c3 == '3' = (merge (merge greens purples) reds) !! round r -- fromList r (greens ++ purples ++ reds) 
- | otherwise = fromList r whites
+ | otherwise = fromList r (merge reds (merge oranges (merge blues greens)))
  where
    reds = ["indianred","lightcoral","salmon","crimson","red","darkred"]
    pinks = ["pink","lightpink","hotpink","deeppink","mediumvioletred","palevioletred"]
@@ -304,11 +304,11 @@ gradientColor x y p w h h1 r g c1 c2 c3 z
    blues = ["aqua","steelblue","deepskyblue","blue","navy","turquoise"]
    browns = ["burlywood","sandybrown","darkgoldenrod","saddlebrown","brown","goldenrod"]
    whites = ["white","honeydew","aliceblue","seashell","beige","mistyrose"]
-   greys = ["gainsboro","silver","gray","lightslategray","darkslategrey"]
+   greys = ["gainsboro","silver","gray","lightslategray","darkslategrey", "gray"]
 
 --
 -- Merges colour lists. 
--- ex. Instead of red ++ blue ++ green, we'll get a more mixed list
+-- ex. Instead of reds ++ blues ++ greens, we'll get a more mixed list
 --
 merge :: [a] -> [a] -> [a]
 merge [] ys = ys
@@ -367,6 +367,7 @@ sanitationHelper input (h:t) = do
 --   input: The IO string we're checking
 --   (h:t): String of boolean functions which input must maintain
 --
+
 alphaCheck :: String -> [Char -> Bool] -> IO ()
 alphaCheck input [] = putStrLn ("\n")
 alphaCheck input (h:t) = do
@@ -383,6 +384,7 @@ alphaCheck input (h:t) = do
    else do {
     ; alphaCheck input t
    }
+
    
 --
 -- The main program which generates and outputs mondrian.html.

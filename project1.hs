@@ -373,17 +373,25 @@ alphaCheck input [] = putStrLn ("\n")
 alphaCheck input (h:t) = do
  if (input == []) then do {
   ; putStrLn("\nInvalid entry. Please try again!\n")
-  ; newInput <- getLine
-  ; alphaCheck newInput (h:t) 
+  ; input <- getLine
+  ; alphaCheck input (h:t) 
   }  
   else if (not (h $ head input)) then do {
    ; putStrLn("\nInvalid entry. Please try again!")
-   ; newInput <- getLine
-   ; alphaCheck newInput (h:t)
+   ; input <- getLine
+   ; alphaCheck input (h:t)
    } 
    else do {
     ; alphaCheck input t
    }
+   
+   
+alphaCheck1 :: String -> [Char -> Bool] -> Bool
+alphaCheck1 input [] = True
+alphaCheck1 input (h:t) = do
+ if (input == []) then False  
+  else if (not (h $ head input)) then False
+   else True
    
 --
 -- The main program which generates and outputs mondrian.html.

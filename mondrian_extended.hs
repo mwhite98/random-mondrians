@@ -326,7 +326,16 @@ main = do
   answer <- getLine
   putStrLn("\nWhat would you like to name your masterpiece?")
   masterpiece <- getLine
+  {-
+   getLineHelper
+		do
+				getLine
+				if its a number
+				returnit
+				else
+				getlinehelper
   
+  -}
   
   -- possibly add an option to ask "how cluttered would you like your painting?"
   -- then edit the split penalty
