@@ -1,17 +1,3 @@
--- WHAT DID I DO??
--- Cleaned up code (added comments, types etc.)
--- opacity / fade
--- lil write up for wiki
--- Reviewed questions
--- update guard to only allow up to 1 digit [1...4] to be entered
-
--- WHAT DO I WANT/NEED TO DO??
--- tests, this is all that's said on the proposal about testing:
---    Does the code work? They will first test it on test cases you suggest, and
---    then test it on their own test cases.
--- so do we need to write any????
--- meet up and make sure we both understand all code for presentation
-
 --
 -- Original Template by Dr. Ben Stephenson, from:
 -- http://nifty.stanford.edu/2018/stephenson-mondrian-art/
@@ -97,7 +83,7 @@ randomInt low high x = round ((fromIntegral (high - low) * x) + fromIntegral low
 -- hs: Horizontal split, if rand1 < width of region, then split
 -- vs: Vertical split, if rand2 < height of the region, then split
 --
--- mondrian :: Int -> Int -> Int -> Int -> Int -> [Double] -> [Double] -> Bool -> [Char] -> [Char] -> [Char] -> ([Double], [Char])
+mondrian :: Int -> Int -> Int -> Int -> Int -> [Double] -> [Double] -> Bool -> [Char] -> [Char] -> [Char] -> Char -> ([Double], [Char])
 mondrian _ _ _ 0 _ rvals gvals _ _ _ _ z = (rvals, "")
 mondrian _ _ _ _ 0 rvals gvals _ _ _ _ z = (rvals, "")
 mondrian x y p w h (r:s:rest) (h1:h2:h3) g c1 c2 c3 z
@@ -125,7 +111,7 @@ mondrian x y p w h (r:s:rest) (h1:h2:h3) g c1 c2 c3 z
 --
 --  Split the region both horizontally and vertically
 --
---b_split :: Int -> Int -> Int -> Int -> Int -> [Double] -> [Double] -> Bool -> [Char] -> [Char] -> [Char] -> ([Double], [Char])
+b_split :: Int -> Int -> Int -> Int -> Int -> [Double] -> [Double] -> Bool -> [Char] -> [Char] -> [Char] -> Char -> ([Double], [Char])
 b_split x y p w h (r:s:rest) (h1:h2:h3) g c1 c2 c3 z = (rest4, s1 ++ s2 ++ s3 ++ s4)
   where 
     h_rand = randomInt 37 67 r
@@ -142,7 +128,7 @@ b_split x y p w h (r:s:rest) (h1:h2:h3) g c1 c2 c3 z = (rest4, s1 ++ s2 ++ s3 ++
 --
 --  Split the region horizontally so that we get two that are side by side
 --
--- h_split :: Int -> Int -> Int -> Int -> Int -> [Double] -> [Double] -> Bool -> [Char] -> [Char] -> [Char] -> ([Double], [Char])
+h_split :: Int -> Int -> Int -> Int -> Int -> [Double] -> [Double] -> Bool -> [Char] -> [Char] -> [Char] -> Char -> ([Double], [Char])
 h_split x y p w h (r:rest) (h1:h2:h3) g c1 c2 c3 z = (rest2, s1 ++ s2)
   where 
     h_rand = randomInt 37 67 r
@@ -154,7 +140,7 @@ h_split x y p w h (r:rest) (h1:h2:h3) g c1 c2 c3 z = (rest2, s1 ++ s2)
 --
 --  Split the region vertically so that we get one on top the other
 --
---v_split :: Int -> Int -> Int -> Int -> Int -> [Double] -> [Double] -> Bool -> [Char] -> [Char] -> [Char] -> ([Double], [Char])
+v_split :: Int -> Int -> Int -> Int -> Int -> [Double] -> [Double] -> Bool -> [Char] -> [Char] -> [Char] -> Char -> ([Double], [Char])
 v_split x y p w h (r:rest) (h1:h2:h3) g c1 c2 c3 z = (rest2, s1 ++ s2)
   where 
     v_rand = randomInt 37 67 r
@@ -166,7 +152,7 @@ v_split x y p w h (r:rest) (h1:h2:h3) g c1 c2 c3 z = (rest2, s1 ++ s2)
 --
 -- Round the region's edges to generate an oval 
 --
--- c_curl :: Int -> Int -> Int -> Int -> Int -> [Double] -> [Double] -> Bool -> [Char] -> [Char] -> [Char] -> ([Double], [Char])
+c_curl :: Int -> Int -> Int -> Int -> Int -> [Double] -> [Double] -> Bool -> [Char] -> [Char] -> [Char] -> Char -> ([Double], [Char])
 c_curl x y p w h (r:rest) (h1:h2:h3) g c1 c2 c3 z = (rest1, s1)
   where 
     p_rand = randomInt 37 67 r
@@ -192,7 +178,7 @@ fade y
 -- Select the random fill colour for the region, if 'Random' was selected. 
 -- Colour generated depends on properties chosen by user, but is otherwise totally random.
 --
--- randomColor :: Int -> Int -> Int -> Int -> Int -> Double -> Double -> Bool -> [Char] -> [Char] -> [Char] -> String
+randomColor :: Int -> Int -> Int -> Int -> Int -> Double -> Double -> Bool -> [Char] -> [Char] -> [Char] -> Char -> String
 randomColor x y p w h r h1 g c1 c2 c3 z
  | g == True = gradientColor x y p w h r h1 g c1 c2 c3 z
  | head c1 == '1' && head c2 == '1' && head c3 == '1' = fromList r (oranges ++ greys ++ whites)
@@ -251,7 +237,7 @@ randomColor x y p w h r h1 g c1 c2 c3 z
 -- Select the random fill colour for the region, if 'Gradient' was selected. 
 -- Colour generated depends on properties chosen by user, but is done as a gradient.
 --    
--- gradientColor :: Int -> Int -> Int -> Int -> Int -> Double -> Double -> Bool -> [Char] -> [Char] -> [Char] -> String
+gradientColor :: Int -> Int -> Int -> Int -> Int -> Double -> Double -> Bool -> [Char] -> [Char] -> [Char] -> Char -> String
 gradientColor x y p w h h1 r g c1 c2 c3 z
  -- | h1 > 17 = gradientColor x y p w h h1 (r-17) g c1 c2 c3
  | head c1 == '1' && head c2 == '1' && head c3 == '1' = (merge (merge oranges greys) whites) !! round r
